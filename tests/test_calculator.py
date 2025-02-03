@@ -13,7 +13,6 @@ def test_divide():
     '''tests that the divide function works'''
     assert divide(2,2) == 1
 
-    def test_multiply():
-        '''tests that the add function works'''
-        assert multiply(2,2) == 4
-        
+def test_multiply():
+    '''tests that the add function works'''
+    assert multiply(2,2) == 4
