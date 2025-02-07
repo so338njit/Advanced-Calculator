@@ -1,6 +1,5 @@
 '''My Calculator Test'''
-from calculator import add, subtract, divide, multiply
-
+from calculator import Calculation
 def test_addition():
     '''tests that the add function works'''
     assert add(2,2) == 4
