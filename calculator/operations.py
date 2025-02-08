@@ -1,13 +1,19 @@
-def add(a,b):
+from decimal import Decimal
+
+@staticmethod
+def add(a: Decimal, b: Decimal) -> Decimal:
     return a + b
 
-def subtract(a,b):
+@staticmethod
+def subtract(a: Decimal, b: Decimal) -> Decimal:
     return a - b
 
-def divide(a,b):
-    if y == 0:
-        return "Erroneous! Thou shalt not divide by zero!"
+@staticmethod
+def divide(a: Decimal, b: Decimal) -> Decimal:
+    if b == 0:
+        raise ValueError("Divide by zero not allowed")
     return a / b
 
-def multiply(a,b):
+@staticmethod
+def multiply(a: Decimal, b: Decimal) -> Decimal:
     return a * b
