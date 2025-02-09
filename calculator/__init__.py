@@ -13,17 +13,17 @@ class Calculator:
     
     @staticmethod
     def add(a: Decimal, b: Decimal) -> Decimal:
-        return Calculator._perform_operation(a, b, Math.add)
+        return Calculator._perform_operation(a, b, add)
     
     @staticmethod
     def subtract(a: Decimal, b: Decimal) -> Decimal:
-        return Calculator._perform_operation(a, b, Math.subtract)
+        return Calculator._perform_operation(a, b, subtract)
     
     @staticmethod
     def multiply(a: Decimal, b: Decimal) -> Decimal:
-        return Calculator._perform_operation(a, b, Math.multiply)
+        return Calculator._perform_operation(a, b, multiply)
     
     @staticmethod
     def divide(a: Decimal, b: Decimal) -> Decimal:
-        return Calculator._perform_operation(a, b, Math.divide)
+        return Calculator._perform_operation(a, b, divide)
         
