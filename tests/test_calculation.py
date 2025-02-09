@@ -4,15 +4,15 @@ import pytest
 from calculator.calculation import Calculation
 from calculator.operations import add, subtract, multiply, divide
 
-@pytest.mark.paramertize("a, b, operation, expected", [
+@pytest.mark.parametrize("a, b, operation, expected", [
     (Decimal('10'), Decimal('5'), add, Decimal('15')),
     (Decimal('10'), Decimal('5'), subtract, Decimal('5')),
     (Decimal('10'), Decimal('2'), multiply, Decimal('20')),
     (Decimal('10'), Decimal('2'), divide, Decimal('5')),
     (Decimal('10.5'), Decimal('1.5'), add, Decimal('12')),
-    (Decimal('10.7'), Decimal('0.9'), subtract, Decimal('11.8')),
+    (Decimal('10.7'), Decimal('0.9'), subtract, Decimal('9.8')),
     (Decimal('10.5'), Decimal('2'), multiply, Decimal('21')),
-    (Decimal('10'), Decimal('0,5'), divide, Decimal('20')),
+    (Decimal('10'), Decimal('0.5'), divide, Decimal('20')),
 ])
 def test_calculation_operations(a, b, operation, expected):
     calc = Calculation(a, b, operation)
@@ -25,5 +25,5 @@ def test_calculation_repr():
 
 def test_divide_by_zreo():
     calc = Calculation(Decimal('10'), Decimal('0'), divide)
-    with pytest.raised(ValueError, match="Cannot divide by zero"):
-        calc.perfrom()
+    with pytest.raises(ValueError, match="Divide by zero not allowed"):
+        calc.perform()

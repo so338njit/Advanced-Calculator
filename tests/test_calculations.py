@@ -11,7 +11,7 @@ from calculator.operations import add, subtract
 def setup_calculations():
     """Clear history and add sample calculations for test."""
     Calculations.clear_history()
-    Calculations.add_calculation(Calculations(Decimal('10'), Decimal('5'), add))
+    Calculations.add_calculation(Calculation(Decimal('10'), Decimal('5'), add))
     Calculations.add_calculation(Calculation(Decimal('20'), Decimal('3'), subtract))
 
 def test_add_calculation(setup_calculations):
