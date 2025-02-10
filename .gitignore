@@ -3,3 +3,4 @@
 .pytest_cache
 *pycache*
 calculator_3_levels/
+venv/
