@@ -1,4 +1,8 @@
-# Import modules and classes
+"""Calculator module providing basic arithmetic operations.
+
+This module implements a Calculator class that performs addition, subtraction,
+multiplication, and division operations while maintaining a history of calculations.
+"""
 from decimal import Decimal
 from typing import Callable
 from calculator.calculations import Calculations
@@ -6,32 +10,32 @@ from calculator.operations import add, subtract, divide, multiply
 from calculator.calculation import Calculation
 
 # pylint: disable=invalid-name
-# pylint: disable=line-to-long
-# Definition of the calculator class
+
 class Calculator:
+    """A calculator class that performs basic arithmetic"""
     @staticmethod
     def _perform_operation(a: Decimal, b: Decimal, operation: Callable[[Decimal, Decimal], Decimal]) -> Decimal:
-        #Creates and performs a calculation, then return the result
+        """Creates and performs a calculation, then return the result"""
         calculation = Calculation.create(a, b, operation)
         Calculations.add_calculation(calculation)
         return calculation.perform()
 
     @staticmethod
     def add(a: Decimal, b: Decimal) -> Decimal:
-        #create method for performing add by delegating to the perform_operation method
+        """add two numbers together"""
         return Calculator._perform_operation(a, b, add)
 
     @staticmethod
     def subtract(a: Decimal, b: Decimal) -> Decimal:
-        #create method for performing subtract by delegating to the perform_operation method
+        """subtract the second number from the first"""
         return Calculator._perform_operation(a, b, subtract)
 
     @staticmethod
     def multiply(a: Decimal, b: Decimal) -> Decimal:
-        #create method for performing multiply by delegating to the perform_operation method
+        """multiply two numbers"""
         return Calculator._perform_operation(a, b, multiply)
 
     @staticmethod
     def divide(a: Decimal, b: Decimal) -> Decimal:
-        #create method for performing divide by delegating to the perform_operation method
+        """Divide the first number by the second"""
         return Calculator._perform_operation(a, b, divide)
