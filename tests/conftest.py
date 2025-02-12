@@ -1,6 +1,7 @@
 """faker testing file"""
-import pytest
+# pylint: disable=unused-import
 from decimal import Decimal
+import pytest
 from faker import Faker
 from calculator.operations import add, subtract, multiply, divide
 
@@ -21,11 +22,11 @@ def generate_test_data(num_records):
         operation_name = fake.random_element(elements=list(operation_mapping.keys()))
         operation_func = operation_mapping[operation_name]
 
-        if operation_func == divide:
+        if operation_name == 'divide':
             b = Decimal('1') if b == Decimal('0') else b
 
         try:
-            if operation_func == divide and b == Decimal('0'):
+            if operation_name == 'divide' and b == Decimal('0'):
                 expected = "ZeroDivisionError"
             else:
                 expected = operation_func(a, b)
@@ -44,6 +45,4 @@ def pytest_generate_tests(metafunc):
         num_records = metafunc.config.getoption("num_records")
         parameters = list(generate_test_data(num_records))
         modified_parameters = [(a, b, op_name if 'operation_name' in metafunc.fixturenames else op_func, expected) for a, b, op_name, op_func, expected in parameters]
-        metafunc.paraterize("a,b,operation,expected", modified_parameters)
-        
-
+        metafunc.parametrize("a,b,operation,expected", modified_parameters)

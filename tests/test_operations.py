@@ -1,12 +1,13 @@
 """testing operations"""
+# pylint: disable = unused-import, invalid-name
 from decimal import Decimal
 import pytest
 from calculator.calculation import Calculation
 from calculator.operations import add, subtract, multiply, divide
 
-def test_operation(a, b, operation, expected)
+def test_operation(a, b, operation, expected):
     """test covering all operations"""
-    calculation = Calculation.create(a, b, operation, expected)
+    calculation = Calculation.create(a, b, operation)
     assert calculation.perform() == expected, f"{operation.__name__} operation failed"
 
 def test_divide_by_zero():

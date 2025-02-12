@@ -1,5 +1,5 @@
 """Module testing the calculation.py file"""
-# pylint: disable=unnecessary-dunder-call, invalid-name
+# pylint: disable=unnecessary-dunder-call, invalid-name, unused-import
 from decimal import Decimal
 import pytest
 from calculator.calculation import Calculation
