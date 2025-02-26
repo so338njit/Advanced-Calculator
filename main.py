@@ -1,37 +1,117 @@
-"""main.py file for calculator execution"""
+"""Command line interface for the Advanced Calculator.
+
+This module provides a command-line interface for the calculator,
+supporting postfix notation like "4 3 add".
+"""
+from decimal import Decimal, InvalidOperation
 import sys
 from calculator import Calculator
-from decimal import Decimal, InvalidOperation
 
-def calculate_and_print(a, b, operation_name):
-    """function to run the calculator application"""
-    operation_mappings = {
-        'add': Calculator.add,
-        'subtract': Calculator.subtract,
-        'multiply': Calculator.multiply,
-        'divide': Calculator.divide
-    }
+def process_command(calc, args):
+    """Process a command in postfix notation (e.g., "4 3 add")"""
+    if len(args) != 3:
+        print("Error: Commands must have exactly 3 parts (e.g., '4 3 add')")
+        return
+
+    # Parse the operands
     try:
-        a_decimal, b_decimal = map(Decimal, [a, b])
-        result = operation_mappings.get(operation_name)
-        if result:
-            print(f"The result of {a} {operation_name} {b} is equal to {result(a_decimal, b_decimal)}")
-        else:
-            print(f"Unknown operation: {operation_name}")
+        a = Decimal(args[0])
+        b = Decimal(args[1])
     except InvalidOperation:
-        print(f"Invalid number input: {a} or {b} is not a valid number.")
-    except ZeroDivisionError:
-        print(f"Error: Division by zero.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        print("Error: Operands must be valid numbers")
+        return
+
+    # Get the operation
+    operation = args[2].lower()
+
+    # Execute the appropriate command
+    try:
+        if operation == "add":
+            result = calc.add(a, b)
+            print(f"{a} + {b} = {result}")
+        elif operation == "subtract":
+            result = calc.subtract(a, b)
+            print(f"{a} - {b} = {result}")
+        elif operation == "multiply":
+            result = calc.multiply(a, b)
+            print(f"{a} * {b} = {result}")
+        elif operation == "divide":
+            result = calc.divide(a, b)
+            print(f"{a} / {b} = {result}")
+        else:
+            print(f"Error: Unknown operation '{operation}'")
+            print("Supported operations: add, subtract, multiply, divide")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+def print_help():
+    """Display help information"""
+    print("Advanced Calculator - Command Line Interface")
+    print("Usage: python main.py [command]")
+    print("\nCommands:")
+    print("  - Calculation in postfix notation: 4 3 add")
+    print("  - history: Display calculation history")
+    print("  - help: Display this help message")
+    print("  - exit: Exit the program")
+    print("\nSupported operations: add, subtract, multiply, divide")
+    print("Example: python main.py 10 5 divide")
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: python calculator_main.py <number1> <number2> <operation>")
-        sys.exit(1)
+    """Main function for the calculator CLI"""
+    calc = Calculator()
+    
+    # Process command line arguments if provided
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "help":
+            print_help()
+        elif sys.argv[1] == "history":
+            show_history(calc)
+        else:
+            process_command(calc, sys.argv[1:])
+        return
 
-    _, a, b, operation = sys.argv
-    calculate_and_print(a, b, operation)
+    # Interactive mode
+    print("Advanced Calculator - Interactive Mode")
+    print("Enter commands in postfix notation (e.g., '4 3 add')")
+    print("Type 'help' for more information or 'exit' to quit")
+    
+    while True:
+        try:
+            user_input = input("\n> ").strip()
+            
+            if not user_input:
+                continue
+                
+            args = user_input.split()
+            command = args[0].lower()
+            
+            if command == "exit":
+                break
+            elif command == "help":
+                print_help()
+            elif command == "history":
+                show_history(calc)
+            else:
+                process_command(calc, args)
+                
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            break
+        except Exception as e:
+            print(f"Error: {e}")
 
-if __name__ == '__main__':
+def show_history(calc):
+    """Display the calculation history"""
+    history = calc.get_history()
+    
+    if not history:
+        print("No calculations in history")
+        return
+        
+    print("\nCalculation History:")
+    for idx, command in enumerate(history, 1):
+        print(f"{idx}. {command}")
+
+if __name__ == "__main__":
     main()
+    
