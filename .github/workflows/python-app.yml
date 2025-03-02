@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest, workflow-dispatch
+    runs-on: ubuntu-latest, workflow_dispatch
 
     steps:
     - uses: actions/checkout@v3
