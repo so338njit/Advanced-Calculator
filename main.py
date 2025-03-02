@@ -3,9 +3,17 @@
 This module provides a command-line interface for the calculator,
 supporting postfix notation like "4 3 add".
 """
+import os
 from decimal import Decimal, InvalidOperation
 import sys
 from calculator import Calculator
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() == "true"
+MAX_HISTORY_SIZE = int(os.getenv("MAX_HISTORY_SIZE", "100"))
+DECIMAL_PRECISION = int(os.getenv("DECIMAL_PRECISION", "10"))
 
 def process_command(calc, args):
     """Process a command in postfix notation (e.g., "4 3 add")"""

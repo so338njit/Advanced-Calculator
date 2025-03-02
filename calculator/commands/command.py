@@ -14,7 +14,7 @@ class Command(ABC):
     def execute(self) -> Decimal:
         """Execute the command and return the result"""
         pass
-
+    
     @property
     @abstractmethod
     def name(self) -> str:
