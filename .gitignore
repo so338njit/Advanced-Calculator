@@ -4,3 +4,5 @@
 *pycache*
 calculator_3_levels/
 venv/
+.env
+logs
