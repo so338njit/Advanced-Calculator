@@ -4,7 +4,7 @@ from typing import Type
 
 from calculator.commands.command import Command
 from calculator.plugins.plugin_interface import PluginInterface
-
+from calculator.config import DECIMAL_PRECISION
 
 class DivideCommand(Command):
     """Command for division operation."""

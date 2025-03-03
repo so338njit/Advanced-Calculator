@@ -2,6 +2,7 @@
 import os
 from typing import List
 from calculator.commands.command import Command
+from calculator.config import MAX_HISTORY_SIZE
 
 class CommandHandler:
     """Handles the execution of commands and maintains history"""
@@ -9,7 +10,7 @@ class CommandHandler:
     def __init__(self):
         """Initialize with empty history"""
         self.history: List[Command] = []
-        self.max_history_size = int(os.getenv("MAX_HISTORY_SIZE", "100"))
+        self.max_history_size = MAX_HISTORY_SIZE
 
     def add_to_history(self, command):
         self.history.append(command)
@@ -19,7 +20,7 @@ class CommandHandler:
     def execute(self, command: Command):
         """Execute a command and store it in history"""
         result = command.execute()
-        self.history.append(command)
+        self.add_to_history(command)
         return result
 
     def get_history(self) -> List[Command]:

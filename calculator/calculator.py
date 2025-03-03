@@ -3,13 +3,14 @@
 This module implements a Calculator class that uses plugins to perform
 various operations while maintaining a history of calculations.
 """
-
+# pylint - disable=unused-import
 from decimal import Decimal
 from typing import Dict, Type, Any
 
 from calculator.commands import CommandHandler
 from calculator.commands.command import Command
 from calculator.plugins import get_plugin_manager
+from calculator.config import DECIMAL_PRECISION
 
 
 class Calculator:

@@ -1,6 +1,7 @@
 """Tests for the CommandHandler class."""
 # pylint: disable=unused-import
 from decimal import Decimal
+from unittest import mock
 import pytest
 from calculator.commands.command_handler import CommandHandler
 from calculator.commands.command import Command
@@ -127,3 +128,22 @@ def test_command_handler_find_by_command_name():
     assert cmd2 in subtract_cmds
 
     assert len(multiply_cmds) == 0
+
+@mock.patch('calculator.commands.command_handler.MAX_HISTORY_SIZE', 3)
+def test_history_size_limit():
+    """Test that history is limited to max size."""
+    handler = CommandHandler()
+
+    # Add more commands than the max limit
+    for i in range(5):
+        cmd = SampleCommand(Decimal(i), Decimal(i))
+        handler.execute(cmd)
+
+    # Check that only the most recent commands are kept
+    assert len(handler.get_history()) == 3
+
+    # Verify the oldest commands were removed
+    history = handler.get_history()
+    assert history[0].a == Decimal(2)
+    assert history[1].a == Decimal(3)
+    assert history[2].a == Decimal(4)

@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation
 import sys
 from calculator import Calculator
 from dotenv import load_dotenv
+from calculator.config import DEBUG_MODE, DEFAULT_OUTPUT_FORMAT, SAVE_HISTORY, HISTORY_FILE
 
 load_dotenv()
 
