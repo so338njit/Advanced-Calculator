@@ -1,4 +1,5 @@
 """Subtraction operation plugin."""
+import logging
 from decimal import Decimal
 from typing import Type
 
@@ -16,7 +17,12 @@ class SubtractCommand(Command):
 
     def execute(self) -> Decimal:
         """Perform subtraction."""
-        return self.a - self.b
+        logger = logging.getLogger(__name__)
+        logger.debug("Subtracting %s from %s", self.b, self.a)
+        
+        result = self.a - self.b
+        logger.debug("Subtraction result: %s", result)
+        return result
 
     def __repr__(self):
         """String representation."""
@@ -35,7 +41,7 @@ class SubtractPlugin(PluginInterface):
     def get_plugin_type(cls) -> str:
         """Return the type of the plugin."""
         return "operation"
-    
+
     @classmethod
     def get_command_class(cls) -> Type[Command]:
         """Return the command class for this operation."""

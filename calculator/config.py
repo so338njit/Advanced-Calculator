@@ -17,3 +17,6 @@ HISTORY_FILE = os.getenv("HISTORY_FILE", "calculator_history.json")
 DECIMAL_PRECISION = int(os.getenv("DECIMAL_PRECISION", "10"))
 SCIENTIFIC_NOTATION_THRESHOLD = int(os.getenv("SCIENTIFIC_NOTATION_THRESHOLD", "10"))
 DEFAULT_OUTPUT_FORMAT = os.getenv("DEFAULT_OUTPUT_FORMAT", "standard")
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+LOG_FILE = os.getenv("LOG_FILE", "logs/calculator.log")

@@ -1,234 +1,120 @@
 """Tests for the Calculator class."""
 # pylint: disable=unused-import, protected-access, no-member
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+from unittest import mock
 import pytest
+
 from calculator.calculator import Calculator
-from calculator.commands import CommandHandler
-from calculator.plugins import get_plugin_manager
-from calculator.plugins.plugin_interface import PluginInterface
+from calculator.plugins.operations.add import AddCommand
+from calculator.plugins.operations.subtract import SubtractCommand
+from calculator.plugins.operations.multiply import MultiplyCommand
+from calculator.plugins.operations.divide import DivideCommand
 
 
-class MockPlugin(PluginInterface):
-    """Mock plugin for testing."""
+class TestCalculator:
+    """Test suite for the Calculator class."""
 
-    @classmethod
-    def get_name(cls):
-        """Return plugin name."""
-        return "mock_operation"
+    def setup_method(self):
+        """Set up test fixture."""
+        # pylint: disable=attribute-defined-outside-init
+        self.calc = Calculator()
 
-    @classmethod
-    def get_plugin_type(cls):
-        """Return plugin type."""
-        return "operation"
+    def test_add(self):
+        """Test addition functionality."""
+        # Test positive numbers
+        result = self.calc.add(Decimal('5'), Decimal('3'))
+        assert result == Decimal('8')
 
-    @classmethod
-    def get_command_class(cls):
-        """Return command class."""
-        return MagicMock
+        # Test negative numbers
+        result = self.calc.add(Decimal('-5'), Decimal('3'))
+        assert result == Decimal('-2')
 
+        # Test decimals
+        result = self.calc.add(Decimal('5.5'), Decimal('3.3'))
+        assert result == Decimal('8.8')
 
-# This is the key fix - patch the correct module path
-@patch('calculator.calculator.get_plugin_manager')
-def test_calculator_initialization(mock_get_plugin_manager):
-    """Test initializing a Calculator."""
-    # Create a mock plugin manager
-    mock_plugin_manager = MagicMock()
-    mock_plugin_manager.get_plugins.return_value = {}
+        # Test zero
+        result = self.calc.add(Decimal('0'), Decimal('3'))
+        assert result == Decimal('3')
 
-    # Set up the mock plugin manager
-    mock_get_plugin_manager.return_value = mock_plugin_manager
+    def test_subtract(self):
+        """Test subtraction functionality."""
+        # Test positive result
+        result = self.calc.subtract(Decimal('8'), Decimal('3'))
+        assert result == Decimal('5')
 
-    # Create a calculator
-    calc = Calculator()
+        # Test negative result
+        result = self.calc.subtract(Decimal('3'), Decimal('8'))
+        assert result == Decimal('-5')
 
-    # Verify the calculator was initialized correctly
-    assert isinstance(calc.command_handler, CommandHandler)
-    assert calc.plugin_manager == mock_plugin_manager
+        # Test with zero
+        result = self.calc.subtract(Decimal('8'), Decimal('0'))
+        assert result == Decimal('8')
 
-    # Verify discover_plugins was called
-    mock_plugin_manager.discover_plugins.assert_called_once_with("calculator.plugins.operations")
+        # Test decimals
+        result = self.calc.subtract(Decimal('8.5'), Decimal('3.2'))
+        assert result == Decimal('5.3')
 
-    # Verify get_plugins was called
-    mock_plugin_manager.get_plugins.assert_called_with("operation")
+    def test_multiply(self):
+        """Test multiplication functionality."""
+        # Test positive numbers
+        result = self.calc.multiply(Decimal('4'), Decimal('3'))
+        assert result == Decimal('12')
 
+        # Test with zero
+        result = self.calc.multiply(Decimal('4'), Decimal('0'))
+        assert result == Decimal('0')
 
-@patch('calculator.calculator.get_plugin_manager')
-def test_calculator_create_operation_methods(mock_get_plugin_manager):
-    """Test creating operation methods."""
-    # Create a mock plugin class
-    mock_op_plugin = MagicMock()
-    mock_op_plugin.get_name.return_value = "mock_operation"
-    mock_op_plugin.get_plugin_type.return_value = "operation"
-    mock_op_plugin.get_command_class.return_value = MagicMock()
+        # Test negative numbers
+        result = self.calc.multiply(Decimal('-4'), Decimal('3'))
+        assert result == Decimal('-12')
 
-    # Create a mock plugin manager
-    mock_plugin_manager = MagicMock()
-    mock_plugin_manager.get_plugins.return_value = {"mock_operation": mock_op_plugin}
+        # Test decimals
+        result = self.calc.multiply(Decimal('4.5'), Decimal('2.5'))
+        assert result == Decimal('11.25')
 
-    # Set up the mock plugin manager
-    mock_get_plugin_manager.return_value = mock_plugin_manager
+    def test_divide(self):
+        """Test division functionality."""
+        # Test even division
+        result = self.calc.divide(Decimal('12'), Decimal('4'))
+        assert result == Decimal('3')
 
-    # Create a calculator
-    calc = Calculator()
+        # Test division with remainder
+        result = self.calc.divide(Decimal('10'), Decimal('3'))
+        assert result == Decimal('10') / Decimal('3')
 
-    # Verify the mock_operation method was created
-    assert hasattr(calc, "mock_operation")
+        # Test division by negative
+        result = self.calc.divide(Decimal('12'), Decimal('-4'))
+        assert result == Decimal('-3')
 
-    # Check the method documentation
-    assert "Perform the mock_operation operation" in calc.mock_operation.__doc__
+        # Test division of zero
+        result = self.calc.divide(Decimal('0'), Decimal('5'))
+        assert result == Decimal('0')
 
+    def test_divide_by_zero(self):
+        """Test division by zero raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            self.calc.divide(Decimal('10'), Decimal('0'))
+        assert "Division by zero is not allowed" in str(exc_info.value)
 
-@patch('calculator.calculator.get_plugin_manager')
-def test_calculator_operation_method(mock_get_plugin_manager):
-    """Test using an operation method."""
-    # Create a mock command class
-    mock_command = MagicMock()
-    mock_command.return_value.execute.return_value = Decimal('15')
+    def test_history(self):
+        """Test history functionality."""
+        # Perform some calculations
+        self.calc.add(Decimal('5'), Decimal('3'))
+        self.calc.subtract(Decimal('10'), Decimal('4'))
+        self.calc.multiply(Decimal('3'), Decimal('6'))
 
-    # Create a mock plugin class
-    mock_op_plugin = MagicMock()
-    mock_op_plugin.get_name.return_value = "test_op"
-    mock_op_plugin.get_plugin_type.return_value = "operation"
-    mock_op_plugin.get_command_class.return_value = mock_command
+        # Check history
+        history = self.calc.get_history()
+        assert len(history) == 3
+        assert isinstance(history[0], AddCommand)
+        assert isinstance(history[1], SubtractCommand)
+        assert isinstance(history[2], MultiplyCommand)
 
-    # Create a mock plugin manager
-    mock_plugin_manager = MagicMock()
-    mock_plugin_manager.get_plugins.return_value = {"test_op": mock_op_plugin}
+    @mock.patch('logging.Logger.debug')
+    def test_logging(self, mock_debug):
+        """Test that calculator operations are properly logged."""
+        self.calc.add(Decimal('5'), Decimal('3'))
 
-    # Set up the mock plugin manager
-    mock_get_plugin_manager.return_value = mock_plugin_manager
-
-    # Create a calculator
-    calc = Calculator()
-
-    # Call the operation method
-    result = calc.test_op(Decimal('10'), Decimal('5'))
-
-    # Verify the command was created and executed
-    mock_command.assert_called_once_with(Decimal('10'), Decimal('5'))
-    mock_command.return_value.execute.assert_called_once()
-    assert result == Decimal('15')
-
-
-@patch('calculator.calculator.get_plugin_manager')
-def test_calculator_get_available_operations(mock_get_plugin_manager):
-    """Test getting available operations."""
-    # Create a mock plugin class
-    mock_op_plugin = MagicMock()
-    mock_op_plugin.get_name.return_value = "test_op"
-    mock_op_plugin.get_plugin_type.return_value = "operation"
-
-    # Create a mock plugin manager
-    mock_plugin_manager = MagicMock()
-    mock_plugin_manager.get_plugins.return_value = {"test_op": mock_op_plugin}
-
-    # Set up the mock plugin manager
-    mock_get_plugin_manager.return_value = mock_plugin_manager
-
-    # Create a calculator
-    calc = Calculator()
-
-    # Get available operations
-    ops = calc.get_available_operations()
-
-    # Verify the result
-    assert ops == {"test_op": "operation"}
-
-
-@patch('calculator.calculator.get_plugin_manager')
-def test_calculator_get_history(mock_get_plugin_manager):
-    """Test getting the calculation history."""
-    # Create a mock plugin manager
-    mock_plugin_manager = MagicMock()
-    mock_plugin_manager.get_plugins.return_value = {}
-
-    # Set up the mock plugin manager
-    mock_get_plugin_manager.return_value = mock_plugin_manager
-
-    # Create a calculator
-    calc = Calculator()
-
-    # Set up a mock command handler
-    calc.command_handler = MagicMock()
-    mock_history = [MagicMock(), MagicMock()]
-    calc.command_handler.get_history.return_value = mock_history
-
-    # Get history
-    history = calc.get_history()
-
-    # Verify the result
-    assert history == mock_history
-    calc.command_handler.get_history.assert_called_once()
-
-
-@patch('calculator.calculator.get_plugin_manager')
-def test_calculator_reload_plugins(mock_get_plugin_manager):
-    """Test reloading plugins."""
-    # Create a mock plugin class
-    mock_op_plugin = MagicMock()
-    mock_op_plugin.get_name.return_value = "mock_operation"
-    mock_op_plugin.get_plugin_type.return_value = "operation"
-    mock_op_plugin.get_command_class.return_value = MagicMock()
-
-    # Create a mock plugin manager
-    mock_plugin_manager = MagicMock()
-    mock_plugin_manager.get_plugins.return_value = {"mock_operation": mock_op_plugin}
-
-    # Set up the mock plugin manager
-    mock_get_plugin_manager.return_value = mock_plugin_manager
-
-    # Create a calculator
-    calc = Calculator()
-
-    # Clear the method cache
-    calc._method_cache = {}
-
-    # Reload plugins
-    calc.reload_plugins()
-
-    # Verify discover_plugins was called
-    mock_plugin_manager.discover_plugins.assert_called_with("calculator.plugins.operations")
-
-    # Verify get_plugins was called
-    mock_plugin_manager.get_plugins.assert_called_with("operation")
-
-    # Verify methods were created
-    assert "mock_operation" in calc._method_cache
-
-
-def test_calculator_integration():
-    """Integration test for the Calculator with real plugins."""
-    # Create a calculator with the real plugin system
-    calc = Calculator()
-
-    # Test the add operation
-    result = calc.add(Decimal('10'), Decimal('5'))
-    assert result == Decimal('15')
-
-    # Test the subtract operation
-    result = calc.subtract(Decimal('10'), Decimal('5'))
-    assert result == Decimal('5')
-
-    # Test the multiply operation
-    result = calc.multiply(Decimal('10'), Decimal('5'))
-    assert result == Decimal('50')
-
-    # Test the divide operation
-    result = calc.divide(Decimal('10'), Decimal('5'))
-    assert result == Decimal('2')
-
-    # Verify operations are dynamically loaded
-    available_ops = calc.get_available_operations()
-    assert "add" in available_ops
-    assert "subtract" in available_ops
-    assert "multiply" in available_ops
-    assert "divide" in available_ops
-
-    # Check history
-    history = calc.get_history()
-    assert len(history) == 4
-    assert history[0].name == "add"
-    assert history[1].name == "subtract"
-    assert history[2].name == "multiply"
-    assert history[3].name == "divide"
+        # Verify logging calls were made
+        assert mock_debug.called

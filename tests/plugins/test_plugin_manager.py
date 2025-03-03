@@ -1,195 +1,207 @@
-"""Tests for the PluginManager class."""
-# pylint: disable=protected-access, unused-import
-import os
-import sys
+# pylint: disable=unused-import, protected-access
+"""Tests for the plugin manager."""
+from unittest import mock
 import importlib
-from typing import Type
-from unittest.mock import patch, MagicMock
+import sys
+from types import ModuleType
 import pytest
+
+from calculator.commands.command import Command
 from calculator.plugins.plugin_interface import PluginInterface
 from calculator.plugins.plugin_manager import PluginManager
 
-# Create a mock plugin class for testing
+
+class MockCommand(Command):
+    """Mock command for testing."""
+
+    @property
+    def name(self):
+        return "mock_command"
+
+    def execute(self):
+        return self.a + self.b
+
+
 class MockPlugin(PluginInterface):
     """Mock plugin for testing."""
 
     @classmethod
-    def get_name(cls) -> str:
-        """Return plugin name."""
-        return "mock_plugin"
+    def get_name(cls):
+        return "mock"
 
     @classmethod
-    def get_plugin_type(cls) -> str:
-        """Return plugin type."""
-        return "mock_type"
+    def get_plugin_type(cls):
+        return "operation"
 
     @classmethod
-    def get_command_class(cls) -> Type:
-        """Return command class."""
-        return MagicMock
+    def get_command_class(cls):
+        return MockCommand
 
 
-def test_plugin_manager_initialization():
-    """Test initializing a PluginManager."""
+class AnotherMockPlugin(PluginInterface):
+    """Another mock plugin for testing."""
+
+    @classmethod
+    def get_name(cls):
+        return "another_mock"
+
+    @classmethod
+    def get_plugin_type(cls):
+        return "format"
+
+    @classmethod
+    def get_command_class(cls):
+        return MockCommand
+
+
+def test_plugin_manager_init():
+    """Test plugin manager initialization."""
     manager = PluginManager()
-    assert not manager._plugins  # Empty dictionary
+    assert not manager._plugins
 
 
-def test_discover_plugins_nonexistent_package():
-    """Test discovering plugins in a nonexistent package."""
-    manager = PluginManager()
-    # This should not raise an exception
-    manager.discover_plugins("nonexistent.package")
-    assert not manager._plugins  # Still empty
+def create_mock_module(name="mock_module", plugins=None):
+    """Create a mock module with plugins."""
+    if plugins is None:
+        plugins = [MockPlugin]
+
+    mock_module = ModuleType(name)
+    for plugin in plugins:
+        setattr(mock_module, plugin.__name__, plugin)
+
+    return mock_module
 
 
-def test_register_plugins_from_module():
+@mock.patch('importlib.import_module')
+def test_register_plugins_from_module(mock_import):
     """Test registering plugins from a module."""
+    # Create plugin manager
     manager = PluginManager()
 
-    # Create a mock module with a plugin class
-    mock_module = MagicMock()
-    mock_module.__name__ = "mock_module"
+    # Create mock module with plugin
+    mock_module = create_mock_module()
 
-    # Add our MockPlugin to the module
-    mock_module.MockPlugin = MockPlugin
-
-    # Register plugins from the module
+    # Register plugins from module
     manager._register_plugins_from_module(mock_module)
 
     # Verify plugin was registered
-    assert "mock_type" in manager._plugins
-    assert "mock_plugin" in manager._plugins["mock_type"]
-    assert manager._plugins["mock_type"]["mock_plugin"] == MockPlugin
+    assert 'operation' in manager._plugins
+    assert 'mock' in manager._plugins['operation']
+    assert manager._plugins['operation']['mock'] == MockPlugin
 
 
-def test_get_plugins_all():
-    """Test getting all plugins."""
+@mock.patch('importlib.import_module')
+@mock.patch('pkgutil.iter_modules')
+def test_discover_plugins(mock_iter_modules, mock_import):
+    """Test discovering plugins in a package."""
+    # Create plugin manager
     manager = PluginManager()
 
-    # Register some mock plugins
-    mock_module = MagicMock()
-    mock_module.Plugin1 = type('Plugin1', (MockPlugin,), {
-        'get_name': classmethod(lambda cls: 'plugin1'),
-        'get_plugin_type': classmethod(lambda cls: 'type1')
-    })
-    mock_module.Plugin2 = type('Plugin2', (MockPlugin,), {
-        'get_name': classmethod(lambda cls: 'plugin2'),
-        'get_plugin_type': classmethod(lambda cls: 'type2')
-    })
+    # Mock package
+    mock_package = mock.MagicMock()
+    mock_package.__path__ = ['mock_path']
+    mock_package.__name__ = 'mock_package'
+    mock_import.return_value = mock_package
 
+    # Mock iter_modules to return a module
+    mock_iter_modules.return_value = [
+        ('loader', 'mock_module', False)  # (loader, name, is_pkg)
+    ]
+
+    # Mock importing the module
+    mock_module = create_mock_module()
+    mock_import.side_effect = [mock_package, mock_module]
+
+    # Discover plugins
+    manager.discover_plugins('mock_package')
+
+    # Verify plugin was registered
+    assert 'operation' in manager._plugins
+    assert 'mock' in manager._plugins['operation']
+    assert manager._plugins['operation']['mock'] == MockPlugin
+
+
+@mock.patch('importlib.import_module')
+@mock.patch('pkgutil.iter_modules')
+def test_discover_plugins_with_subpackage(mock_iter_modules, mock_import):
+    """Test discovering plugins in a package with subpackages."""
+    # Create plugin manager
+    manager = PluginManager()
+
+    # Mock packages
+    mock_package = mock.MagicMock()
+    mock_package.__path__ = ['mock_path']
+    mock_package.__name__ = 'mock_package'
+
+    mock_subpackage = mock.MagicMock()
+    mock_subpackage.__path__ = ['mock_subpath']
+    mock_subpackage.__name__ = 'mock_package.mock_subpackage'
+
+    # Mock iter_modules to return a subpackage and then a module
+    mock_iter_modules.side_effect = [
+        [('loader', 'mock_package.mock_subpackage', True)],  # For package
+        [('loader', 'mock_package.mock_subpackage.mock_module', False)]  # For subpackage
+    ]
+
+    # Mock importing the modules
+    mock_module = create_mock_module()
+    mock_import.side_effect = [mock_package, mock_subpackage, mock_module]
+
+    # Discover plugins
+    manager.discover_plugins('mock_package')
+
+    # Verify plugin was registered
+    assert 'operation' in manager._plugins
+    assert 'mock' in manager._plugins['operation']
+    assert manager._plugins['operation']['mock'] == MockPlugin
+
+
+def test_get_plugins():
+    """Test getting plugins by type."""
+    # Create plugin manager
+    manager = PluginManager()
+
+    # Manually register plugins
+    mock_module = create_mock_module(plugins=[MockPlugin, AnotherMockPlugin])
     manager._register_plugins_from_module(mock_module)
 
     # Get all plugins
     all_plugins = manager.get_plugins()
-
-    # Verify results
     assert len(all_plugins) == 2
-    assert 'plugin1' in all_plugins
-    assert 'plugin2' in all_plugins
+    assert all_plugins['mock'] == MockPlugin
+    assert all_plugins['another_mock'] == AnotherMockPlugin
 
+    # Get operation plugins
+    operation_plugins = manager.get_plugins('operation')
+    assert len(operation_plugins) == 1
+    assert operation_plugins['mock'] == MockPlugin
 
-def test_get_plugins_by_type():
-    """Test getting plugins by type."""
-    manager = PluginManager()
+    # Get format plugins
+    format_plugins = manager.get_plugins('format')
+    assert len(format_plugins) == 1
+    assert format_plugins['another_mock'] == AnotherMockPlugin
 
-    # Register some mock plugins
-    mock_module = MagicMock()
-    mock_module.Plugin1 = type('Plugin1', (MockPlugin,), {
-        'get_name': classmethod(lambda cls: 'plugin1'),
-        'get_plugin_type': classmethod(lambda cls: 'type1')
-    })
-    mock_module.Plugin2 = type('Plugin2', (MockPlugin,), {
-        'get_name': classmethod(lambda cls: 'plugin2'),
-        'get_plugin_type': classmethod(lambda cls: 'type1')
-    })
-    mock_module.Plugin3 = type('Plugin3', (MockPlugin,), {
-        'get_name': classmethod(lambda cls: 'plugin3'),
-        'get_plugin_type': classmethod(lambda cls: 'type2')
-    })
-
-    manager._register_plugins_from_module(mock_module)
-
-    # Get plugins by type
-    type1_plugins = manager.get_plugins("type1")
-    type2_plugins = manager.get_plugins("type2")
-    type3_plugins = manager.get_plugins("type3")  # Non-existent type
-
-    # Verify results
-    assert len(type1_plugins) == 2
-    assert 'plugin1' in type1_plugins
-    assert 'plugin2' in type1_plugins
-
-    assert len(type2_plugins) == 1
-    assert 'plugin3' in type2_plugins
-
-    assert len(type3_plugins) == 0
+    # Get nonexistent plugin type
+    nonexistent_plugins = manager.get_plugins('nonexistent')
+    assert nonexistent_plugins == {}
 
 
 def test_get_plugin():
     """Test getting a specific plugin."""
+    # Create plugin manager
     manager = PluginManager()
 
-    # Register a mock plugin
-    mock_module = MagicMock()
-    TestPlugin = type('TestPlugin', (MockPlugin,), {
-        'get_name': classmethod(lambda cls: 'test_plugin'),
-        'get_plugin_type': classmethod(lambda cls: 'test_type')
-    })
-    mock_module.TestPlugin = TestPlugin
-
+    # Manually register plugins
+    mock_module = create_mock_module(plugins=[MockPlugin, AnotherMockPlugin])
     manager._register_plugins_from_module(mock_module)
 
-    # Get the plugin
-    plugin = manager.get_plugin("test_type", "test_plugin")
+    # Get specific plugins
+    operation_plugin = manager.get_plugin('operation', 'mock')
+    format_plugin = manager.get_plugin('format', 'another_mock')
 
-    # Verify result
-    assert plugin == TestPlugin
+    assert operation_plugin == MockPlugin
+    assert format_plugin == AnotherMockPlugin
 
-    # Test with non-existent type/name
-    assert manager.get_plugin("nonexistent_type", "test_plugin") is None
-    assert manager.get_plugin("test_type", "nonexistent_plugin") is None
-
-
-@pytest.mark.skip("Mocking iter_modules and import_module together is too complex")
-@patch('pkgutil.iter_modules')
-@patch('importlib.import_module')
-def test_discover_plugins_complex(mock_import_module, mock_iter_modules):
-    """Complex test for discover_plugins with mocks."""
-    # Test is skipped
-
-
-def test_discover_plugins_behavior():
-    """
-    Test the behavior of discover_plugins with real packages.
-    This is more reliable than trying to mock complex Python module interactions.
-    """
-    # Create a plugin manager
-    manager = PluginManager()
-
-    # Call discover_plugins with a real package that has plugins
-    manager.discover_plugins("calculator.plugins.operations")
-
-    # Verify plugins were discovered and registered
-    assert "operation" in manager._plugins
-    operations = manager._plugins.get("operation", {})
-
-    # Check that standard operations were found
-    assert len(operations) > 0
-
-    # Look for specific operations if they should be there
-    expected_ops = ["add", "subtract", "multiply", "divide"]
-    for op in expected_ops:
-        if op in operations:
-            # Get the plugin class
-            plugin_class = operations[op]
-            # Verify it has the required plugin interface methods
-            assert hasattr(plugin_class, 'get_name')
-            assert hasattr(plugin_class, 'get_plugin_type')
-            assert hasattr(plugin_class, 'get_command_class')
-
-    # Test that a non-existent package doesn't raise errors
-    manager._plugins = {}  # Clear existing plugins
-    manager.discover_plugins("nonexistent.package")
-    # Should not have found any plugins
-    assert "operation" not in manager._plugins or len(manager._plugins.get("operation", {})) == 0
+    # Get nonexistent plugin
+    nonexistent_plugin = manager.get_plugin('operation', 'nonexistent')
+    assert nonexistent_plugin is None

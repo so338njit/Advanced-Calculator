@@ -1,4 +1,5 @@
 """Addition operation plugin."""
+import logging
 from decimal import Decimal
 from typing import Type
 
@@ -16,7 +17,12 @@ class AddCommand(Command):
 
     def execute(self) -> Decimal:
         """Perform addition."""
-        return self.a + self.b
+        logger = logging.getLogger(__name__)
+        logger.debug("Adding %s and %s", self.a, self.b)
+        
+        result = self.a + self.b
+        logger.debug("Addition result: %s", result)
+        return result
 
     def __repr__(self):
         """String representation."""

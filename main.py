@@ -9,7 +9,9 @@ import sys
 from calculator import Calculator
 from dotenv import load_dotenv
 from calculator.config import DEBUG_MODE, DEFAULT_OUTPUT_FORMAT, SAVE_HISTORY, HISTORY_FILE
+from calculator.logging_setup import setup_logging
 
+logger = setup_logging()
 load_dotenv()
 
 DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() == "true"

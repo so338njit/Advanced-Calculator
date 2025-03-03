@@ -1,4 +1,5 @@
 """Division operation plugin."""
+import logging
 from decimal import Decimal
 from typing import Type
 
@@ -16,9 +17,16 @@ class DivideCommand(Command):
 
     def execute(self) -> Decimal:
         """Perform division."""
+        logger = logging.getLogger(__name__)
+        logger.debug("Dividing %s by %s", self.a, self.b)
+        
         if self.b == 0:
+            logger.warning("Division by zero attempted: %s / %s", self.a, self.b)
             raise ValueError("Division by zero is not allowed")
-        return self.a / self.b
+            
+        result = self.a / self.b
+        logger.debug("Division result: %s (using precision: %s)", result, DECIMAL_PRECISION)
+        return result
 
     def __repr__(self):
         """String representation."""
